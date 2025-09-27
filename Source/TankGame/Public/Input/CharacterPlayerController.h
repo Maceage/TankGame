@@ -53,6 +53,9 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> CameraZoomAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> EnterVehicleAction;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	float WalkSpeed = 200;
 
@@ -76,4 +79,6 @@ private:
 	void ToggleCrouch();
 
 	void CameraZoom(const FInputActionValue& Value);
+
+	void EnterVehicle();
 };

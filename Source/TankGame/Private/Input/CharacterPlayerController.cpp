@@ -13,7 +13,8 @@ void ACharacterPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(
+		GetLocalPlayer()))
 	{
 		Subsystem->AddMappingContext(DefaultMappingContext, 0);
 	}
@@ -31,7 +32,7 @@ void ACharacterPlayerController::SetupInputComponent()
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent))
 	{
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ACharacterPlayerController::Move);
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &ACharacterPlayerController::StopMove);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this,	&ACharacterPlayerController::StopMove);
 
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ACharacterPlayerController::Look);
 
@@ -46,7 +47,9 @@ void ACharacterPlayerController::SetupInputComponent()
 
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Triggered, this, &ACharacterPlayerController::ToggleCrouch);
 
-		EnhancedInputComponent->BindAction(CameraZoomAction, ETriggerEvent::Triggered, this, &ACharacterPlayerController::CameraZoom);		
+		EnhancedInputComponent->BindAction(CameraZoomAction, ETriggerEvent::Triggered, this, &ACharacterPlayerController::CameraZoom);
+
+		EnhancedInputComponent->BindAction(EnterVehicleAction, ETriggerEvent::Triggered, this, &ACharacterPlayerController::EnterVehicle);
 	}
 }
 
@@ -62,7 +65,7 @@ void ACharacterPlayerController::Move(const FInputActionValue& Value)
 			const FRotator CameraRotation(0, Rotation.Yaw, 0);
 
 			FVector2D MovementVector = Value.Get<FVector2D>();
-			
+
 			const FVector ForwardDirection = FRotationMatrix(CameraRotation).GetUnitAxis(EAxis::X);
 			ControlledCharacter->AddMovementInput(ForwardDirection, MovementVector.Y);
 
@@ -74,12 +77,9 @@ void ACharacterPlayerController::Move(const FInputActionValue& Value)
 
 void ACharacterPlayerController::StopMove()
 {
-	if (GetCharacter())
+	if (ACharacter* ControlledCharacter = CastChecked<ACharacter>(GetCharacter()))
 	{
-		if (ACharacter* ControlledCharacter = CastChecked<ACharacter>(GetCharacter()))
-		{
-			ControlledCharacter->GetCharacterMovement()->bOrientRotationToMovement = true;
-		}
+		ControlledCharacter->GetCharacterMovement()->bOrientRotationToMovement = true;
 	}
 }
 
@@ -93,109 +93,98 @@ void ACharacterPlayerController::Look(const FInputActionValue& Value)
 
 void ACharacterPlayerController::Jump()
 {
-	if (GetCharacter())
+	if (ACharacter* ControlledCharacter = GetCharacter())
 	{
-		if (ACharacter* ControlledCharacter = GetCharacter())
-		{
-			ControlledCharacter->Jump();
-		}
+		ControlledCharacter->Jump();
 	}
 }
 
 void ACharacterPlayerController::StopJumping()
 {
-	if (GetCharacter())
+	if (ACharacter* ControlledCharacter = GetCharacter())
 	{
-		if (ACharacter* ControlledCharacter = GetCharacter())
-		{
-			ControlledCharacter->StopJumping();
-		}
+		ControlledCharacter->StopJumping();
 	}
 }
 
 void ACharacterPlayerController::StartSprint()
 {
-	if (GetCharacter())
+	if (ACharacter* ControlledCharacter = GetCharacter())
 	{
-		if (ACharacter* ControlledCharacter = GetCharacter())
-		{
-			ControlledCharacter->GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
-		}
+		ControlledCharacter->GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
 	}
 }
 
 void ACharacterPlayerController::StopSprint()
 {
-	if (GetCharacter())
+	if (ACharacter* ControlledCharacter = GetCharacter())
 	{
-		if (ACharacter* ControlledCharacter = GetCharacter())
-		{
-			ControlledCharacter->GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
-		}
+		ControlledCharacter->GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 	}
 }
 
 void ACharacterPlayerController::Attack()
 {
-	if (GetCharacter())
+	if (AMainCharacter* ControlledCharacter = CastChecked<AMainCharacter>(GetCharacter()))
 	{
-		if (AMainCharacter* ControlledCharacter = CastChecked<AMainCharacter>(GetCharacter()))
-		{
-			ControlledCharacter->Attack();
-		}
+		ControlledCharacter->Attack();
 	}
 }
 
 void ACharacterPlayerController::ToggleAim()
 {
-	if (GetCharacter())
+	if (AMainCharacter* ControlledCharacter = CastChecked<AMainCharacter>(GetCharacter()))
 	{
-		if (AMainCharacter* ControlledCharacter = CastChecked<AMainCharacter>(GetCharacter()))
+		if (ControlledCharacter->IsAttacking())
 		{
-			if (ControlledCharacter->IsAttacking())
-			{
-				return;
-			}
+			return;
+		}
 
-			if (ControlledCharacter->bIsAiming)
-			{
-				ControlledCharacter->Aim(false);
-			}
-			else
-			{
-				ControlledCharacter->Aim(true);
-			}
+		if (ControlledCharacter->bIsAiming)
+		{
+			ControlledCharacter->Aim(false);
+		}
+		else
+		{
+			ControlledCharacter->Aim(true);
 		}
 	}
 }
 
 void ACharacterPlayerController::ToggleCrouch()
 {
-	if (GetCharacter())
+	if (AMainCharacter* ControlledCharacter = CastChecked<AMainCharacter>(GetCharacter()))
 	{
-		if (AMainCharacter* ControlledCharacter = CastChecked<AMainCharacter>(GetCharacter()))
+		if (ControlledCharacter->IsCrouched())
 		{
-			if (ControlledCharacter->IsCrouched())
-			{
-				ControlledCharacter->UnCrouch();
-			}
-			else
-			{
-				ControlledCharacter->Crouch();
-			}
+			ControlledCharacter->UnCrouch();
+		}
+		else
+		{
+			ControlledCharacter->Crouch();
 		}
 	}
 }
 
 void ACharacterPlayerController::CameraZoom(const FInputActionValue& Value)
 {
-	if (GetCharacter())
+	if (AMainCharacter* ControlledCharacter = CastChecked<AMainCharacter>(GetCharacter()))
 	{
-		if (AMainCharacter* ControlledCharacter = CastChecked<AMainCharacter>(GetCharacter()))
+		float ActionValue = Value.Get<float>();
+
+		ControlledCharacter->ZoomCamera(ActionValue);
+	}
+}
+
+void ACharacterPlayerController::EnterVehicle()
+{
+	if (AMainCharacter* ControlledCharacter = CastChecked<AMainCharacter>(GetCharacter()))
+	{
+		if (ControlledCharacter->ControllableVehicle)
 		{
-			float ActionValue = Value.Get<float>();
-			
-			ControlledCharacter->ZoomCamera(ActionValue);
+			ControlledCharacter->ControllableVehicle->EnterVehicle();
+
+			ControlledCharacter->Destroy();
 		}
 	}
 }

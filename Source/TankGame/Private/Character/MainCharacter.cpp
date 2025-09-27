@@ -8,6 +8,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Shared/Vehicle.h"
 
 AMainCharacter::AMainCharacter()
 {
@@ -17,14 +18,16 @@ AMainCharacter::AMainCharacter()
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AMainCharacter::OnComponentBeginOverlap_CapsuleComponent);
+	GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &AMainCharacter::OnComponentEndOverlap_CapsuleComponent);
+	
 	AttackCapsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("AttackCapsule"));
 	AttackCapsule->InitCapsuleSize(10.f, 30.f);
 	AttackCapsule->CanCharacterStepUpOn = ECB_No;
 	AttackCapsule->SetGenerateOverlapEvents(true);
 	AttackCapsule->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
 	AttackCapsule->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, TEXT("LeftHandSocket"));
-	AttackCapsule->OnComponentBeginOverlap.AddDynamic(this, &AMainCharacter::OnOverlapBegin_AttackCapsule);
-
+	AttackCapsule->OnComponentBeginOverlap.AddDynamic(this, &AMainCharacter::OnComponentBeginOverlap_AttackCapsule);
 	AttackCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	
 	GetCharacterMovement()->bOrientRotationToMovement = true;
@@ -142,8 +145,8 @@ void AMainCharacter::ZoomCamera(float ActionValue)
 	}
 }
 
-void AMainCharacter::OnOverlapBegin_AttackCapsule(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-                                                  UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AMainCharacter::OnComponentBeginOverlap_AttackCapsule(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor != this && OtherActor->IsA(ACharacter::StaticClass()))
 	{
@@ -158,6 +161,21 @@ void AMainCharacter::OnOverlapBegin_AttackCapsule(UPrimitiveComponent* Overlappe
 		Cast<APawn>(this)->GetController(),		// Instigator (Controller)
 		this,									// Damage Causer (Actor)
 		UDamageType::StaticClass());			// Default damage type
+}
+
+void AMainCharacter::OnComponentBeginOverlap_CapsuleComponent(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor != this && OtherActor->IsA(UVehicle::StaticClass()))
+	{
+		ControllableVehicle = Cast<IVehicle>(OtherActor);
+	}
+}
+
+void AMainCharacter::OnComponentEndOverlap_CapsuleComponent(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	ControllableVehicle = nullptr;
 }
 
 void AMainCharacter::PerformLineTraceAndApplyDamage()

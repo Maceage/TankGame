@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/TimelineComponent.h"
 #include "GameFramework/Character.h"
+#include "Shared/Vehicle.h"
 #include "MainCharacter.generated.h"
 
 class UCameraComponent;
@@ -58,6 +59,8 @@ public:
 	
 	float ZoomValue;
 
+	IVehicle* ControllableVehicle;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -76,16 +79,21 @@ public:
 
 	void ZoomCamera(float ZoomValue);
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	bool bIsAiming = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	bool bIsZoomFinished = true;
 	
 	UFUNCTION()
-	void OnOverlapBegin_AttackCapsule(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+	void OnComponentBeginOverlap_AttackCapsule(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
+	UFUNCTION()
+	void OnComponentBeginOverlap_CapsuleComponent(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnComponentEndOverlap_CapsuleComponent(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	
 	UFUNCTION()
 	void OnCameraZoomTimelineUpdate(float TimelineAlpha);
 
