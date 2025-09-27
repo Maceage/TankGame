@@ -166,7 +166,7 @@ void AMainCharacter::OnComponentBeginOverlap_AttackCapsule(UPrimitiveComponent* 
 void AMainCharacter::OnComponentBeginOverlap_CapsuleComponent(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor != this && OtherActor->IsA(UVehicle::StaticClass()))
+	if (OtherActor != this && OtherActor->GetClass()->ImplementsInterface(UVehicle::StaticClass()))
 	{
 		ControllableVehicle = Cast<IVehicle>(OtherActor);
 	}
